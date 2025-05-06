@@ -1,9 +1,5 @@
-##################
-# DATA CLEANSING #
-##################
 import re
 import string
-import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
@@ -57,19 +53,23 @@ stop_words_id = ["ada","adalah","adanya","adapun","agak","agaknya","agar","akan"
 
 
 def data_cleansing(text):
-    nltk_stopwords_id = set(stopwords.words('indonesian'))
+    print(text)
+    nltk_stopwords_id = set(stopwords.words('indonesian'))  # NLTK stopwords Indonesia
+    
+    # Gabungkan stop words ID custom dengan NLTK stopwords
+    stop_words_id.extend(nltk_stopwords_id)
 
     text = text.lower()
 
     # Remove URLs
     text = re.sub(r'((www\.[^\s]+)|(https?://[^\s]+))', ' ', text)
 
-    # Remove Tags
+    # Remove Mentions (Twitter handles)
     text = re.sub(r'@[\S]+', 'MENTIONED_USER', text)
 
-    # Remove Hashtags and keep the text
-    text = re.sub(r'#', '', text)
-    
+    # Remove Hashtags but keep the text
+    text = re.sub(r'#\S+', '', text)
+
     # Remove Digits
     text = re.sub(r'\d+', '', text)
 
@@ -79,7 +79,13 @@ def data_cleansing(text):
     # Remove Extra Whitespace
     text = re.sub(r'\s+', ' ', text).strip()
 
+    # Tokenize the text
     tokens = word_tokenize(text)
-    tokens = [word for word in tokens if word not in nltk_stopwords_id]
-    
-    return ' '.join(tokens)
+
+    # Remove stopwords and non-alphabetical tokens
+    tokens = [word for word in tokens if word not in stop_words_id and word.isalpha()]
+
+    # Reconstruct the sentence
+    cleaned_text = ' '.join(tokens)
+    print(cleaned_text)
+    return cleaned_text
