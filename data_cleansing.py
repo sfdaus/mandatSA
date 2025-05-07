@@ -53,7 +53,6 @@ stop_words_id = ["ada","adalah","adanya","adapun","agak","agaknya","agar","akan"
 
 
 def data_cleansing(text):
-    print(text)
     nltk_stopwords_id = set(stopwords.words('indonesian'))  # NLTK stopwords Indonesia
     
     # Gabungkan stop words ID custom dengan NLTK stopwords
@@ -87,5 +86,5 @@ def data_cleansing(text):
 
     # Reconstruct the sentence
     cleaned_text = ' '.join(tokens)
-    print(cleaned_text)
+    
     return cleaned_text
