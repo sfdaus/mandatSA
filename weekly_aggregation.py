@@ -52,20 +52,20 @@ merged = merged.dropna(subset=["Open","Close"])
 merged["pct_return"] = (merged["Close"] - merged["Open"]) / merged["Open"] * 100
 
 
-print(merged[["total","positive","pct_positive","negative", "pct_negative", "neutral", "pct_neutral","Open","Close","pct_return"]])
+# print(merged[["total","positive","pct_positive","negative", "pct_negative", "neutral", "pct_neutral","Open","Close","pct_return"]])
 
 # Ringkasan statistik untuk persentase sentimen dan return
 desc = merged[['pct_positive','pct_negative','pct_neutral','pct_return']].describe().T
-print(desc[['mean','std','min','max']])
+# print(desc[['mean','std','min','max']])
 
 # Matriks korelasi Pearson
 corr_mat = merged[['pct_positive','pct_negative','pct_neutral','pct_return']].corr()
-print(corr_mat)
+# print(corr_mat)
 
 # Khusus:
-print("Corr %pos vs %return:",  corr_mat.loc['pct_positive','pct_return'])
-print("Corr %neg vs %return:",  corr_mat.loc['pct_negative','pct_return'])
-print("Corr %neu vs %return:",  corr_mat.loc['pct_neutral','pct_return'])
+# print("Corr %pos vs %return:",  corr_mat.loc['pct_positive','pct_return'])
+# print("Corr %neg vs %return:",  corr_mat.loc['pct_negative','pct_return'])
+# print("Corr %neu vs %return:",  corr_mat.loc['pct_neutral','pct_return'])
 
 # Pilih dua kategori untuk hindari multikol:
 X = merged[['pct_positive','pct_negative']]  
@@ -73,7 +73,18 @@ X = sm.add_constant(X)
 y = merged['pct_return']
 
 model = sm.OLS(y, X).fit()
-print(model.summary())
+# print(model.summary())
+pearson_neg = merged['pct_negative'].corr(merged['pct_return'])
+rho_neg, pval_neg = spearmanr(merged['pct_negative'], merged['pct_return'])
+# print(f"Negatif → Pearson r = {pearson_neg:.3f}, Spearman ρ = {rho_neg:.3f} (p = {pval_neg:.3f})")
+
+pearson_pos = merged['pct_positive'].corr(merged['pct_return'])
+rho_pos, pval_pos = spearmanr(merged['pct_positive'], merged['pct_return'])
+# print(f"Positif → Pearson r = {pearson_pos:.3f}, Spearman ρ = {rho_pos:.3f} (p = {pval_pos:.3f})")
+
+pearson_neut = merged['pct_neutral'].corr(merged['pct_return'])
+rho_neut, pval_neut = spearmanr(merged['pct_neutral'], merged['pct_return'])
+# print(f"Neutral → Pearson r = {pearson_neut:.3f}, Spearman ρ = {rho_neut:.3f} (p = {pval_neut:.3f})")
 
 #=================================== versi balance
 
@@ -81,7 +92,7 @@ merged['balance'] = merged['pct_positive'] - merged['pct_negative']
 
 # 1. Spearman correlation
 rho, pval = spearmanr(merged['balance'], merged['pct_return'])
-print(f"Spearman rho={rho:.3f}, p={pval:.3f}")
+# print(f"Spearman rho={rho:.3f}, p={pval:.3f}")
 
 obs_rho, _ = spearmanr(merged['balance'], merged['pct_return'])
 B = 5000
@@ -92,15 +103,15 @@ for _ in range(B):
     if abs(rho_perm) >= abs(obs_rho):
         count += 1
 p_perm = count / B
-print(f"Observed ρ = {obs_rho:.3f}")
-print(f"Permutation p-value = {p_perm:.3f}")
+# print(f"Observed ρ = {obs_rho:.3f}")
+# print(f"Permutation p-value = {p_perm:.3f}")
 
 X = merged[['balance']].values
 y = merged['pct_return'].values
 
 huber = HuberRegressor().fit(X, y)
-print("Huber coef (balance):", huber.coef_[0])
-print("Huber intercept:", huber.intercept_)
+# print("Huber coef (balance):", huber.coef_[0])
+# print("Huber intercept:", huber.intercept_)
 
 coefs = []
 for _ in range(2000):
@@ -110,7 +121,7 @@ for _ in range(2000):
     m = HuberRegressor().fit(Xs, ys)
     coefs.append(m.coef_[0])
 ci = np.percentile(coefs, [2.5, 97.5])
-print(f"95% Bootstrap CI: [{ci[0]:.3f}, {ci[1]:.3f}]")
+# print(f"95% Bootstrap CI: [{ci[0]:.3f}, {ci[1]:.3f}]")
 
 loo = LeaveOneOut()
 errors = []
@@ -123,6 +134,16 @@ for train_i, test_i in loo.split(X):
 rmse = np.sqrt(np.mean(errors))
 print(f"LOOCV RMSE: {rmse:.3f}")
 
+# y_pred_full = huber.predict(X)
+# rho_pred, pval_pred = spearmanr(y_pred_full, y)
+# print(f"Spearman ρ (pred vs actual) = {rho_pred:.3f} (p = {pval_pred:.3f})")
+
+
 X2 = sm.add_constant(merged['balance'])
-ols = sm.OLS(merged['pct_return'], X2, missing='drop').fit(cov_type='HC3')
-print(ols.summary())
+# ols = sm.OLS(merged['pct_return'], X2, missing='drop').fit(cov_type='HC3')
+# print(ols.summary())
+
+y_pred_full = sm.OLS(y, X2).fit().predict(X2)
+from scipy.stats import spearmanr
+rho, pval = spearmanr(y_pred_full, y)
+print(f"Spearman rho(pred vs actual) = {rho:.3f} (p = {pval:.3f})")

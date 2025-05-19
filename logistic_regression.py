@@ -20,7 +20,7 @@ vectorizer = TfidfVectorizer(
     min_df=1             
 )
 x = vectorizer.fit_transform(df['clean_text'])
-print("Fitur akhir:", x.shape[1])
+# print("Fitur akhir:", x.shape[1])
 y = df['label']  
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -40,15 +40,15 @@ y_pred = model.predict(X_test)
 print("=== Classification Report ===")
 print(classification_report(y_test, y_pred, digits=4))
 
-print("=== Confusion Matrix ===")
-print(confusion_matrix(y_test, y_pred, labels=model.classes_))
+# print("=== Confusion Matrix ===")
+# print(confusion_matrix(y_test, y_pred, labels=model.classes_))
 
 df_kappa = df_2[['label','label_manual']].dropna()
 df_kappa['label'] = df_kappa['label'].astype(str)
 df_kappa['label_manual'] = df_kappa['label_manual'].astype(str)
 
 kappa = cohen_kappa_score(df_kappa['label'], df_kappa['label_manual'])
-print(f"Cohen's κ = {kappa:.3f}")
+# print(f"Cohen's κ = {kappa:.3f}")
 
 # Compute confusion matrix
 labels = model.classes_
